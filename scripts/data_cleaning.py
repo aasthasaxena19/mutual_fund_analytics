@@ -1,4 +1,23 @@
 import pandas as pd
+fund = pd.read_csv(
+    "data/raw/01_fund_master.csv"
+)
+
+fund = fund.drop_duplicates()
+
+fund['expense_ratio_pct'] = pd.to_numeric(
+    fund['expense_ratio_pct'],
+    errors='coerce'
+)
+
+fund = fund[
+    fund['expense_ratio_pct'] >= 0
+]
+
+fund.to_csv(
+    "data/processed/01_fund_master.csv",
+    index=False
+)
 nav = pd.read_csv(
     "data/raw/02_nav_history.csv"
 )
@@ -15,9 +34,97 @@ nav['nav'] = nav.groupby(
 
 nav = nav.drop_duplicates()
 
-nav = nav[nav['nav'] > 0]
+nav = nav[
+    nav['nav'] > 0
+]
+
 nav.to_csv(
     "data/processed/02_nav_history.csv",
+    index=False
+)
+aum = pd.read_csv(
+    "data/raw/03_aum_by_fund_house.csv"
+)
+
+aum['date'] = pd.to_datetime(
+    aum['date']
+)
+
+aum = aum.drop_duplicates()
+
+aum = aum[
+    aum['aum_crore'] > 0
+]
+
+aum.to_csv(
+    "data/processed/03_aum_by_fund_house.csv",
+    index=False
+)
+sip = pd.read_csv(
+    "data/raw/04_monthly_sip_inflows.csv"
+)
+
+sip = sip.drop_duplicates()
+
+sip['yoy_growth_pct'] = (
+    sip['yoy_growth_pct']
+    .fillna(0)
+)
+
+sip.to_csv(
+    "data/processed/04_monthly_sip_inflows.csv",
+    index=False
+)
+cat = pd.read_csv(
+    "data/raw/05_category_inflows.csv"
+)
+
+cat = cat.drop_duplicates()
+
+cat['net_inflow_crore'] = pd.to_numeric(
+    cat['net_inflow_crore'],
+    errors='coerce'
+)
+
+cat.to_csv(
+    "data/processed/05_category_inflows.csv",
+    index=False
+)
+folio = pd.read_csv(
+    "data/raw/06_industry_folio_count.csv"
+)
+
+folio = folio.drop_duplicates()
+
+folio.to_csv(
+    "data/processed/06_industry_folio_count.csv",
+    index=False
+)
+perf = pd.read_csv(
+    "data/raw/07_scheme_performance.csv"
+)
+
+returns_cols = [
+    'return_1yr_pct',
+    'return_3yr_pct',
+    'return_5yr_pct'
+]
+
+for col in returns_cols:
+
+    perf[col] = pd.to_numeric(
+        perf[col],
+        errors='coerce'
+    )
+
+anomalies = perf[
+    perf['expense_ratio_pct'] > 2.5
+]
+
+print(anomalies)
+
+perf.to_csv(
+    "data/processed/07_scheme_performance.csv",
     index=False
 )
 tx = pd.read_csv(
@@ -58,25 +165,40 @@ tx.to_csv(
     "data/processed/08_investor_transactions.csv",
     index=False
 )
-perf = pd.read_csv(
-    "data/raw/07_scheme_performance.csv"
+portfolio = pd.read_csv(
+    "data/raw/09_portfolio_holdings.csv"
 )
 
-returns_cols = [
-    'return_1yr_pct',
-    'return_3yr_pct',
-    'return_5yr_pct'
+portfolio = portfolio.drop_duplicates()
+
+portfolio['weight_pct'] = pd.to_numeric(
+    portfolio['weight_pct'],
+    errors='coerce'
+)
+
+portfolio = portfolio[
+    portfolio['weight_pct'] > 0
 ]
 
-for col in returns_cols:
+portfolio.to_csv(
+    "data/processed/09_portfolio_holdings.csv",
+    index=False
+)
+benchmark = pd.read_csv(
+    "data/raw/10_benchmark_indices.csv"
+)
 
-    perf[col] = pd.to_numeric(
-        perf[col],
-        errors='coerce'
-    )
+benchmark['date'] = pd.to_datetime(
+    benchmark['date']
+)
 
-anomalies = perf[
-    perf['expense_ratio_pct'] > 2.5
+benchmark = benchmark.drop_duplicates()
+
+benchmark = benchmark[
+    benchmark['close_value'] > 0
 ]
 
-print(anomalies)
+benchmark.to_csv(
+    "data/processed/10_benchmark_indices.csv",
+    index=False
+)
