@@ -3,119 +3,119 @@
 -- =====================================
 
 SELECT
-d.scheme_name,
-a.aum
+    d.scheme_name,
+    d.fund_house,
+    a.aum
 FROM fact_aum a
 JOIN dim_fund d
 ON a.fund_id = d.fund_id
 ORDER BY a.aum DESC
 LIMIT 5;
 
+
 -- =====================================
--- Query 2: Average NAV by Fund
+-- Query 2: Average NAV Per Month
 -- =====================================
 
 SELECT
-d.scheme_name,
-ROUND(AVG(n.nav),2) AS avg_nav
-FROM fact_nav n
-JOIN dim_fund d
-ON n.fund_id = d.fund_id
-GROUP BY d.scheme_name
-ORDER BY avg_nav DESC;
+    strftime('%Y-%m', date) AS month,
+    ROUND(AVG(nav),2) AS average_nav
+FROM fact_nav
+GROUP BY month
+ORDER BY month;
+
 
 -- =====================================
--- Query 3: Total Transactions Amount by Fund
+-- Query 3: SIP YoY Growth
 -- =====================================
 
 SELECT
-d.scheme_name,
-SUM(t.amount) AS total_amount
-FROM fact_transactions t
-JOIN dim_fund d
-ON t.fund_id = d.fund_id
-GROUP BY d.scheme_name
+    month,
+    yoy_growth_pct
+FROM monthly_sip_inflows
+ORDER BY month;
+
+
+-- =====================================
+-- Query 4: Transactions by State
+-- =====================================
+
+SELECT
+    state,
+    COUNT(*) AS total_transactions,
+    ROUND(SUM(amount),2) AS total_amount
+FROM fact_transactions
+GROUP BY state
 ORDER BY total_amount DESC;
 
+
 -- =====================================
--- Query 4: Funds with Expense Ratio < 1%
+-- Query 5: Funds with Expense Ratio < 1%
 -- =====================================
 
 SELECT
-scheme_name,
-expense_ratio_pct
+    scheme_name,
+    expense_ratio_pct
 FROM fact_performance
 WHERE expense_ratio_pct < 1
 ORDER BY expense_ratio_pct;
 
 -- =====================================
--- Query 5: Top 10 Funds by 5-Year Return
+-- Query 6: Top 10 Funds by 5-Year Return
 -- =====================================
 
 SELECT
-d.scheme_name,
-p.return_5yr
-FROM fact_performance p
-JOIN dim_fund d
-ON p.fund_id = d.fund_id
-ORDER BY p.return_5yr DESC
+    scheme_name,
+    return_5yr_pct
+FROM fact_performance
+ORDER BY return_5yr_pct DESC
 LIMIT 10;
 
+
 -- =====================================
--- Query 6: Average Returns Across All Funds
+-- Query 7: Number of Schemes by Fund House
 -- =====================================
 
 SELECT
-ROUND(AVG(return_1yr),2) AS avg_1yr_return,
-ROUND(AVG(return_3yr),2) AS avg_3yr_return,
-ROUND(AVG(return_5yr),2) AS avg_5yr_return
-FROM fact_performance;
-
--- =====================================
--- Query 7: Number of Schemes per Fund House
--- =====================================
-
-SELECT
-fund_house,
-COUNT(*) AS total_schemes
+    fund_house,
+    COUNT(*) AS total_schemes
 FROM dim_fund
 GROUP BY fund_house
 ORDER BY total_schemes DESC;
+
 
 -- =====================================
 -- Query 8: Number of Schemes by Category
 -- =====================================
 
 SELECT
-category,
-COUNT(*) AS scheme_count
+    sub_category,
+    COUNT(*) AS scheme_count
 FROM dim_fund
-GROUP BY category
+GROUP BY sub_category
 ORDER BY scheme_count DESC;
 
+
 -- =====================================
--- Query 9: Highest NAV Recorded
+-- Query 9: Top 10 Portfolio Holdings by Weight
 -- =====================================
 
 SELECT
-d.scheme_name,
-MAX(n.nav) AS highest_nav
-FROM fact_nav n
-JOIN dim_fund d
-ON n.fund_id = d.fund_id
-GROUP BY d.scheme_name
-ORDER BY highest_nav DESC
+    stock_name,
+    sector,
+    weight_pct
+FROM portfolio_holdings
+ORDER BY weight_pct DESC
 LIMIT 10;
 
+
 -- =====================================
--- Query 10: Fund-wise AUM Summary
+-- Query 10: Category-wise Net Inflows
 -- =====================================
 
 SELECT
-d.scheme_name,
-d.fund_house,
-a.aum
-FROM fact_aum a
-JOIN dim_fund d
-ON a.fund_id = d.fund_id
-ORDER BY a.aum DESC;
+    category,
+    ROUND(SUM(net_inflow_crore),2) AS total_inflow
+FROM category_inflows
+GROUP BY category
+ORDER BY total_inflow DESC;
