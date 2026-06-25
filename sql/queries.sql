@@ -43,11 +43,10 @@ ORDER BY total_amount DESC;
 
 SELECT
 scheme_name,
-fund_house,
-expense_ratio
-FROM dim_fund
-WHERE expense_ratio < 1
-ORDER BY expense_ratio;
+expense_ratio_pct
+FROM fact_performance
+WHERE expense_ratio_pct < 1
+ORDER BY expense_ratio_pct;
 
 -- =====================================
 -- Query 5: Top 10 Funds by 5-Year Return
