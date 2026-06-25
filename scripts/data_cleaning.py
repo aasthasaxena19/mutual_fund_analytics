@@ -1,4 +1,15 @@
 import pandas as pd
+import os
+
+os.makedirs(
+    "data/processed",
+    exist_ok=True
+)
+
+os.makedirs(
+    "reports",
+    exist_ok=True
+)
 fund = pd.read_csv(
     "data/raw/01_fund_master.csv"
 )
@@ -112,16 +123,30 @@ returns_cols = [
 
 for col in returns_cols:
 
-    perf[col] = pd.to_numeric(
-        perf[col],
-        errors='coerce'
+    if col in perf.columns:
+
+        perf[col] = pd.to_numeric(
+            perf[col],
+            errors='coerce'
+        )
+
+# Expense ratio validation
+
+if 'expense_ratio_pct' in perf.columns:
+
+    anomalies = perf[
+        (perf['expense_ratio_pct'] < 0.1) |
+        (perf['expense_ratio_pct'] > 2.5)
+    ]
+
+    print(
+        f"Expense Ratio Anomalies: {len(anomalies)}"
     )
 
-anomalies = perf[
-    perf['expense_ratio_pct'] > 2.5
-]
-
-print(anomalies)
+    anomalies.to_csv(
+        "reports/performance_anomalies.csv",
+        index=False
+    )
 
 perf.to_csv(
     "data/processed/07_scheme_performance.csv",
@@ -133,7 +158,9 @@ tx = pd.read_csv(
 
 tx['transaction_type'] = (
     tx['transaction_type']
+    .astype(str)
     .str.upper()
+    .str.strip()
 )
 
 allowed = [
@@ -158,8 +185,36 @@ tx = tx[
 ]
 
 tx['transaction_date'] = pd.to_datetime(
-    tx['transaction_date']
+    tx['transaction_date'],
+    errors='coerce'
 )
+
+# KYC Validation
+
+if 'kyc_status' in tx.columns:
+
+    tx['kyc_status'] = (
+        tx['kyc_status']
+        .astype(str)
+        .str.upper()
+        .str.strip()
+    )
+
+    valid_kyc = [
+        'VERIFIED',
+        'PENDING',
+        'REJECTED'
+    ]
+
+    invalid_kyc = tx[
+        ~tx['kyc_status'].isin(
+            valid_kyc
+        )
+    ]
+
+    print(
+        f"Invalid KYC Rows: {len(invalid_kyc)}"
+    )
 
 tx.to_csv(
     "data/processed/08_investor_transactions.csv",
